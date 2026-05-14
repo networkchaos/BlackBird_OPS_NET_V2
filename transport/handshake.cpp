@@ -1,11 +1,11 @@
 // create a handshake for the transport layer 
 #pragma once 
-#iclude <sodium.h>
+#include <sodium.h>
 #include <stdexcept>
 #include <cstring>
 #include "connection.cpp"
 
-namesapce BRD {
+namespace BRD {
     struct SessionKeys{
         uint8_t tx[crypto_secretbox_KEYBYTES]; //key to encrypt outgoing
         uint8_t rx[crypto_secretbox_KEYBYTES]; //key to decrypt incoming
@@ -34,6 +34,8 @@ namesapce BRD {
                 throw std::runtime_error("Handshake failed - suspect client");
 
             }
+            //erase secrets key after use in ram
+            sodium_memzero(server_sk, sizeof(server_sk));
             return keys;
 
     }
@@ -57,8 +59,12 @@ SessionKeys clientHandshake(Connection& conn){
             client_pk, client_sk, server_pk) != 0) {
         throw std::runtime_error("Handshake failed");
     }
+    // Erase secret key from memory after use
+    sodium_memzero(client_sk, sizeof(client_sk));
     return keys;
 }
 
 
 }
+
+//both side encryption : if one side is compromised the other one may still be safe 
